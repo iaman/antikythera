@@ -1,25 +1,39 @@
-###
-Antikythera is a state machine built specifically to aid
-in debugging race conditions and other bugs that tend to
-happen between page states
-###
+# Antikythera is a state machine built specifically to aid
+# in debugging race conditions and other bugs that tend to
+# happen between page states
 
 class Antikythera
 
   options:
     development: false
-
-  constructor: (@options) ->
-
-  currentStage: ->
-    if options.currentStage?
-      @options.currentStage if @options.currentStage?
-    else
+    currentStage:
       id: "default"
 
-  go: (stageName, data)
-    currentStage = @currentStage()
-    return false if !stageName? or stageName == currentStage.id
-    currentStage.out?()
-    @options.currentStage = @stages[stageName]
-    @options.currentStage.in?(data)
+  stages: {}
+
+  stageQueue: []
+
+  constructor: (options) ->
+    @options.development = options?.development or @options.development
+
+  go: (stageName, data) ->
+    return @stageQueue.push({stageName, data}) if @options.development
+    return false if !stageName? or stageName == @options.currentStage.id
+  
+    @_transition(@stages[stageName], data)
+
+  stage: (stageName, transitionIn, transitionOut) ->
+    @stages[stageName] =
+      id: stageName
+      in: transitionIn
+      out: transitionOut
+
+  crank: ->
+    return "No queued stage transitions" unless @stageQueue.length > 0
+    stage = @stageQueue.shift()
+    return @_transition(@stages[stage.stageName], stage.data)
+
+  _transition: (stage, data) ->
+    @options.currentStage?.out?()
+    @options.currentStage = stage
+    stage.in?(data)
