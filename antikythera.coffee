@@ -5,36 +5,33 @@
 
 class Antikythera
 
-  options:
-    development: false
-    currentStage:
-      id: "default"
+  currentStage:
+    name: "default"
 
-  stages: {}
+  constructor: (@options) ->
+    @stages = {}
+    @stageQueue = []
+    @currentStage = @currentStage
 
-  stageQueue: []
+  go: (name, data) ->
+    return @stageQueue.push({name, data}) if @options?.development
+    return false if !name? or name == @currentStage.name
 
-  constructor: (options) ->
-    @options.development = options?.development or @options.development
+    @_transition(@stages[name], data)
 
-  go: (stageName, data) ->
-    return @stageQueue.push({stageName, data}) if @options.development
-    return false if !stageName? or stageName == @options.currentStage.id
-
-    @_transition(@stages[stageName], data)
-
-  stage: (stageName, transitionIn, transitionOut) ->
-    @stages[stageName] =
-      id: stageName
-      in: transitionIn
-      out: transitionOut
+  stage: (name, transitionIn, transitionOut) ->
+    @stages[name] =
+      name: name
+      transitionIn: transitionIn
+      transitionOut: transitionOut
 
   crank: ->
-    return "No queued stage transitions" unless @stageQueue.length > 0
+    return false unless @stageQueue.length > 0
     stage = @stageQueue.shift()
-    return @_transition(@stages[stage.stageName], stage.data)
+    return @_transition(@stages[stage.name], stage.data)
 
   _transition: (stage, data) ->
-    @options.currentStage.out?(data?.out)
-    @options.currentStage = stage
-    stage.in?(data?.in)
+    @currentStage.transitionOut?(data?.out)
+    @currentStage = stage
+    stage.transitionIn?(data?.in)
+    true
