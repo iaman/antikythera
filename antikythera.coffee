@@ -1,6 +1,7 @@
 # Antikythera is a state machine built specifically to aid
 # in debugging race conditions and other bugs that tend to
-# happen between page states
+# happen between and during particular stages in the life
+# of your page
 
 class Antikythera
 
@@ -19,7 +20,7 @@ class Antikythera
   go: (stageName, data) ->
     return @stageQueue.push({stageName, data}) if @options.development
     return false if !stageName? or stageName == @options.currentStage.id
-  
+
     @_transition(@stages[stageName], data)
 
   stage: (stageName, transitionIn, transitionOut) ->
@@ -34,6 +35,6 @@ class Antikythera
     return @_transition(@stages[stage.stageName], stage.data)
 
   _transition: (stage, data) ->
-    @options.currentStage?.out?()
+    @options.currentStage.out?(data?.out)
     @options.currentStage = stage
-    stage.in?(data)
+    stage.in?(data?.in)
