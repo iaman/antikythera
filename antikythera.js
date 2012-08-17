@@ -5,29 +5,57 @@ Antikythera = (function() {
 
   Antikythera.name = 'Antikythera';
 
-  Antikythera.prototype.currentStage = {
-    name: "default"
-  };
-
   function Antikythera(options) {
     this.options = options;
     this.stages = {};
     this.stageQueue = [];
-    this.currentStage = this.currentStage;
+    this.history = [];
+    this.position = -1;
+    this.currentStage = {
+      name: "default"
+    };
   }
+
+  Antikythera.prototype.crank = function() {
+    var stage, _ref, _ref1;
+    if (!((_ref = this.options) != null ? _ref.development : void 0)) {
+      return false;
+    }
+    if (this._present || this.position === ((_ref1 = this.stageQueue[0]) != null ? _ref1.position : void 0)) {
+      if (!(this.stageQueue.length > 0)) {
+        return false;
+      }
+      stage = this.stageQueue.shift();
+      if (this._present) {
+        this._log(this.stages[stage.name], stage.data);
+      }
+      return this._transition(this.stages[stage.name], stage.data);
+    } else {
+
+    }
+  };
 
   Antikythera.prototype.go = function(name, data) {
     var _ref;
     if ((_ref = this.options) != null ? _ref.development : void 0) {
-      return this.stageQueue.push({
-        name: name,
-        data: data
-      });
+      return this._queue(name, this.position, data);
     }
     if (!(name != null) || name === this.currentStage.name) {
       return false;
     }
+    this._log(this.stages[name], data);
     return this._transition(this.stages[name], data);
+  };
+
+  Antikythera.prototype.reverse = function() {
+    var _ref;
+    if (!((this.history.length > 0) && ((_ref = this.options) != null ? _ref.development : void 0))) {
+      return false;
+    }
+    this._transition(this.history[this.position].transitionedIn, {
+      "in": this.history[this.position].dataIn
+    });
+    return this.position--;
   };
 
   Antikythera.prototype.stage = function(name, transitionIn, transitionOut) {
@@ -38,13 +66,32 @@ Antikythera = (function() {
     };
   };
 
-  Antikythera.prototype.crank = function() {
-    var stage;
-    if (!(this.stageQueue.length > 0)) {
-      return false;
+  Antikythera.prototype._log = function(stage, data) {
+    this.history.push({
+      dataIn: data != null ? data["in"] : void 0,
+      dataOut: data != null ? data.out : void 0,
+      position: this.history.length,
+      transitionedOut: this.currentStage,
+      transitionedIn: stage
+    });
+    return this.position++;
+  };
+
+  Antikythera.prototype._present = function() {
+    if (this.position === (this.history.length - 1)) {
+      return true;
     }
-    stage = this.stageQueue.shift();
-    return this._transition(this.stages[stage.name], stage.data);
+  };
+
+  Antikythera.prototype._queue = function(name, position, data) {
+    this.stageQueue.push({
+      name: name,
+      position: position,
+      data: data
+    });
+    return this.stageQueue.sort(function(a, b) {
+      return a.position - b.position;
+    });
   };
 
   Antikythera.prototype._transition = function(stage, data) {

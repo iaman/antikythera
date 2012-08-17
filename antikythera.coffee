@@ -5,19 +5,33 @@
 
 class Antikythera
 
-  currentStage:
-    name: "default"
-
   constructor: (@options) ->
     @stages = {}
     @stageQueue = []
-    @currentStage = @currentStage
+    @history = []
+    @position = -1
+    @currentStage =
+      name: "default"
+
+  crank: ->
+    return false unless @options?.development
+    if @_present or @position is @stageQueue[0]?.position
+      return false unless (@stageQueue.length > 0)
+      stage = @stageQueue.shift()
+      if @_present then @_log(@stages[stage.name], stage.data)
+      return @_transition(@stages[stage.name], stage.data)
+    else
 
   go: (name, data) ->
-    return @stageQueue.push({name, data}) if @options?.development
+    return @_queue(name, @position, data) if @options?.development
     return false if !name? or name == @currentStage.name
-
+    @_log(@stages[name], data)
     @_transition(@stages[name], data)
+
+  reverse: ->
+    return false unless (@history.length > 0) and @options?.development
+    @_transition @history[@position].transitionedIn, { in: @history[@position].dataIn }
+    @position--
 
   stage: (name, transitionIn, transitionOut) ->
     @stages[name] =
@@ -25,10 +39,25 @@ class Antikythera
       transitionIn: transitionIn
       transitionOut: transitionOut
 
-  crank: ->
-    return false unless @stageQueue.length > 0
-    stage = @stageQueue.shift()
-    return @_transition(@stages[stage.name], stage.data)
+  _log: (stage, data) ->
+    @history.push
+      dataIn: data?.in
+      dataOut: data?.out
+      position: @history.length
+      transitionedOut: @currentStage
+      transitionedIn: stage
+    @position++
+
+  _present: ->
+    return true if @position is (@history.length - 1)
+
+  _queue: (name, position, data) ->
+    @stageQueue.push
+      name: name
+      position: position
+      data: data
+    @stageQueue.sort (a, b) ->
+      return a.position - b.position
 
   _transition: (stage, data) ->
     @currentStage.transitionOut?(data?.out)
