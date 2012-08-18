@@ -8,10 +8,12 @@ class Antikythera
   constructor: (@options) ->
     @stages = {}
     @stageQueue = []
-    @history = []
-    @position = -1
     @currentStage =
       name: "default"
+      transitionIn: ->
+      transitionOut: ->
+    @history = [{transitionedIn: @currentStage}]
+    @position = 0
 
   crank: ->
     return false unless @options?.development
@@ -28,10 +30,10 @@ class Antikythera
     @_log(@stages[name], data)
     @_transition(@stages[name], data)
 
-  reverse: ->
-    return false unless (@history.length > 0) and @options?.development
-    @_transition @history[@position].transitionedIn, { in: @history[@position].dataIn }
+  rewind: ->
+    return false unless (@history.length > 1) and @options?.development
     @position--
+    @_transition @history[@position]?.transitionedIn, { in: @history[@position]?.dataIn }
 
   stage: (name, transitionIn, transitionOut) ->
     @stages[name] =

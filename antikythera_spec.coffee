@@ -32,10 +32,11 @@ describe "Antikythera", ->
       expect(@blah.crank()).toBeFalsy
 
     it "logs the transition if the Antikythera is in the present", ->
+      spyOn @blah, "_log"
       @blah.go "stuff"
       @blah.crank()
 
-      expect(@blah.history.length).toEqual 1
+      expect(@blah._log).toHaveBeenCalledWith @blah.stages["stuff"], undefined
 
     it "shifts a transition out of the queue and fires it off", ->
       @blah.go "stuff"
@@ -63,7 +64,7 @@ describe "Antikythera", ->
         development: true
       @blah.go "stuff"
 
-      expect(@blah._queue).toHaveBeenCalledWith "stuff", -1, undefined
+      expect(@blah._queue).toHaveBeenCalledWith "stuff", 0, undefined
 
     it "returns false if the requested stage is the current stage", ->
       expect(@blah.go("default")).toBeFalsy
@@ -97,7 +98,7 @@ describe "Antikythera", ->
       expect(@blah._transition).toHaveBeenCalledWith @blah.stages["stuff"], { in: "hello", out: "goodbye" }
 
 
-  describe "reverse", ->
+  describe "rewind", ->
 
     beforeEach ->
       @blah = new Antikythera
@@ -106,19 +107,19 @@ describe "Antikythera", ->
       @blah.stage "things", transitionIn, transitionOut
 
     it "returns false if there's no history", ->
-      expect(@blah.reverse()).toBeFalsy
+      expect(@blah.rewind()).toBeFalsy
 
     it "returns false if the Antikythera is not in development mode", ->
       @blah.options.development = false
       @blah.go "stuff"
 
-      expect(@blah.reverse()).toBeFalsy
+      expect(@blah.rewind()).toBeFalsy
 
     it "fires off a transition", ->
       spyOn @blah, "_transition"
       @blah.go "things"
       @blah.crank()
-      @blah.reverse()
+      @blah.rewind()
 
       expect(@blah._transition.calls.length).toEqual 2
 
@@ -127,9 +128,10 @@ describe "Antikythera", ->
       @blah.go "things", { in: "hello", out: "goodbye" }
       @blah.go "stuff"
       @blah.crank()
-      @blah.reverse()
+      @blah.crank()
+      @blah.rewind()
 
-      expect(@blah._transition.calls[1].args).toEqual [
+      expect(@blah._transition.calls[2].args).toEqual [
         name: "things"
         transitionIn: transitionIn
         transitionOut: transitionOut
@@ -141,11 +143,11 @@ describe "Antikythera", ->
       @blah.go "stuff"
       @blah.crank()
 
-      expect(@blah.position).toEqual 0      
+      expect(@blah.position).toEqual 1
 
-      @blah.reverse()
+      @blah.rewind()
 
-      expect(@blah.position).toEqual -1
+      expect(@blah.position).toEqual 0
 
 
   describe "stage", ->
@@ -173,18 +175,16 @@ describe "Antikythera", ->
         out: "goodbye"
 
     it "logs the data for a transition", ->
-      expect(@blah.history[0].dataIn).toEqual "hello"
-      expect(@blah.history[0].dataOut).toEqual "goodbye"
-      expect(@blah.history[0].position).toEqual 0
-      expect(@blah.history[0].transitionedOut).toEqual
-        name: "default"
-      expect(@blah.history[0].transitionedIn).toEqual
+      expect(@blah.history[1].dataIn).toEqual "hello"
+      expect(@blah.history[1].dataOut).toEqual "goodbye"
+      expect(@blah.history[1].position).toEqual 1
+      expect(@blah.history[1].transitionedIn).toEqual
         name: "stuff"
         transitionIn: transitionIn
         transitionOut: transitionOut
 
     it "increments the position", ->
-      expect(@blah.position).toEqual 0
+      expect(@blah.position).toEqual 1
 
 
   describe "_present", ->
@@ -200,7 +200,7 @@ describe "Antikythera", ->
       @blah.stage "stuff", transitionIn, transitionOut
       @blah.go "stuff"
       @blah.crank()
-      @blah.reverse()
+      @blah.rewind()
 
       expect(@blah._present()).toBeFalsy()
 
@@ -211,26 +211,26 @@ describe "Antikythera", ->
       @blah = new Antikythera()
 
     it "adds a transition to the stageQueue", ->
-      @blah._queue "stuff", -1, undefined
+      @blah._queue "stuff", 0, undefined
 
       expect(@blah.stageQueue.length).toEqual 1
       expect(@blah.stageQueue[0]).toEqual
         name: "stuff"
-        position: -1
+        position: 0
         data: undefined
 
     it "automatically sorts transitions by their position in history", ->
-      @blah._queue "stuff", 0, undefined
-      @blah._queue "things", -1, undefined
+      @blah._queue "stuff", 1, undefined
+      @blah._queue "things", 0, undefined
 
       expect(@blah.stageQueue.length).toEqual 2
       expect(@blah.stageQueue[0]).toEqual
         name: "things"
-        position: -1
+        position: 0
         data: undefined
       expect(@blah.stageQueue[1]).toEqual
         name: "stuff"
-        position: 0
+        position: 1
         data: undefined
 
 
