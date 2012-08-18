@@ -39,7 +39,7 @@ function otherOut(data) { ... } // Does something with the data
 blah.stage("things", otherIn, otherOut);
 ```
 
-It's best to make your stages as discrete as possible, so try to make sure to include everything you'd need to back out of a stage in the transitionOut function: unbinding event listeners, DOM cleanup, et cetera. If you find yourself thinking that there are things you wouldn't want to clean up transitioning out of a stage, you're probably in a __subflow__, and you might want to spin up a new Antikythera to handle discrete changes that are internal to that subflow.
+It's best to make your stages as discrete as possible, so try to make sure to include everything you'd need to back out of a stage in the **transitionOut** function: unbinding event listeners, DOM cleanup, et cetera. If you find yourself thinking that there are things you wouldn't want to clean up transitioning out of a stage, you're probably in a __subflow__, and you might want to spin up a new Antikythera to handle discrete changes that are internal to that subflow.
 
 ## Transitioning between stages
 
@@ -49,19 +49,19 @@ Once you've set up an Antikythera and pumped a few stages in, it's time to start
 blah.go("stuff");
 ```
 
-Assuming you've just spun up this Antikythera and given it a few stages, this will run the **transitionIn()** function we created up above. Let's try going to a different stage:
+Assuming you've just spun up this Antikythera and given it a few stages, this will run the **transitionIn** function we created up above. Let's try going to a different stage:
 
 ```javascript
 blah.go("things");
 ```
 
-Now, since we were in the "stuff" stage, this will run **transitionOut()** and then **otherIn()**, putting us into the "things" stage! Finally, let's try giving a transition some data:
+Now, since we were in the "stuff" stage, this will run **transitionOut** and then **otherIn**, putting us into the "things" stage! Finally, let's try giving a transition some data:
 
 ```javascript
 blah.go("stuff", { out: { hammerTime: true } });
 ```
 
-This time, we'll call **otherOut()** with the argument __{ hammerTime: true }__, then **transitionIn()** without any data.
+This time, we'll call **otherOut** with the argument __{ hammerTime: true }__, then **transitionIn()** without any data.
 
 ## Development mode
 
@@ -72,3 +72,13 @@ blah.crank();
 ```
 
 Crank will shift the first request out of the queue and execute it. Subsequent requests can be handled with more calls to the **crank** method.
+
+Additionally, development mode opens up the ability for you to step back through the canonical stage history of a page with the **rewind** method. **NOTE: If any of your transitions send data, I'd recommend not using this functionality in a production environment, as it will call your transitions again with the same data.**
+
+Assuming you've made some transitions already, all you have to do is call **rewind**:
+
+```javascript
+blah.rewind();
+```
+
+And the Antikythera will back up into the previous stage. When you're in a previous stage, your Antikythera will behave a bit differently. Notably, any stage transitions you make will not be logged, so they won't affect your canonical page history. Additionally, **crank** will prioritize new transitions (IE ones you initiate while in a previous stage) but, in the absence of new transitions, will also bring you forward one stage in the page's history.
