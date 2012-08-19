@@ -21,21 +21,30 @@ Antikythera = (function() {
   }
 
   Antikythera.prototype.crank = function() {
-    var stage, _ref, _ref1;
+    var stage, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
     if (!((_ref = this.options) != null ? _ref.development : void 0)) {
       return false;
     }
-    if (this._present || this.position === ((_ref1 = this.stageQueue[0]) != null ? _ref1.position : void 0)) {
+    if (this._present() || this.position === ((_ref1 = this.stageQueue[0]) != null ? _ref1.position : void 0)) {
       if (!(this.stageQueue.length > 0)) {
         return false;
       }
       stage = this.stageQueue.shift();
-      if (this._present) {
+      if (this._present()) {
         this._log(this.stages[stage.name], stage.data);
       }
       return this._transition(this.stages[stage.name], stage.data);
     } else {
-
+      if (((_ref2 = this.history[this.position]) != null ? _ref2.transitionedIn : void 0) !== this.currentStage) {
+        this._transition((_ref3 = this.history[this.position]) != null ? _ref3.transitionedIn : void 0, {
+          "in": (_ref4 = this.history[this.position]) != null ? _ref4.dataIn : void 0
+        });
+      }
+      this.position++;
+      return this._transition((_ref5 = this.history[this.position]) != null ? _ref5.transitionedIn : void 0, {
+        "in": (_ref6 = this.history[this.position]) != null ? _ref6.dataIn : void 0,
+        out: (_ref7 = this.history[this.position]) != null ? _ref7.dataOut : void 0
+      });
     }
   };
 
@@ -53,7 +62,7 @@ Antikythera = (function() {
 
   Antikythera.prototype.rewind = function() {
     var _ref, _ref1, _ref2;
-    if (!((this.history.length > 1) && ((_ref = this.options) != null ? _ref.development : void 0))) {
+    if (!((this.history.length > 1) && this.position > 0 && ((_ref = this.options) != null ? _ref.development : void 0))) {
       return false;
     }
     this.position--;

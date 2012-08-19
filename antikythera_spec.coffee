@@ -52,6 +52,30 @@ describe "Antikythera", ->
 
       expect(@blah._transition).toHaveBeenCalledWith @blah.stages["stuff"], { in: "hello", out: "goodbye" }
 
+    describe "when called in a previous stage", ->
+
+      it "returns the stage to the canon historical stage before trying to progress through history", ->
+        @blah.stage "things", transitionIn, transitionOut
+        @blah.go "stuff"
+        @blah.crank()
+        @blah.rewind()
+        @blah.go "things"
+        @blah.crank()
+        spyOn @blah, "_transition"
+        @blah.crank()
+
+        expect(@blah._transition.calls[0].args).toEqual [ @blah.history[0].transitionedIn, { in: undefined } ]
+
+      it "progresses one stage forward through the history", ->
+        @blah.go "stuff"
+        @blah.crank()
+        @blah.rewind()
+        spyOn @blah, "_transition"
+        @blah.crank()
+
+        expect(@blah.position).toEqual 1
+        expect(@blah._transition.calls[0].args).toEqual [ @blah.stages["stuff"], { in: undefined, out: undefined }]
+
 
   describe "go", ->
 
@@ -107,6 +131,13 @@ describe "Antikythera", ->
       @blah.stage "things", transitionIn, transitionOut
 
     it "returns false if there's no history", ->
+      expect(@blah.rewind()).toBeFalsy
+
+    it "returns false if you've already gone back to the first stage", ->
+      @blah.go "stuff"
+      @blah.crank()
+      @blah.rewind()
+
       expect(@blah.rewind()).toBeFalsy
 
     it "returns false if the Antikythera is not in development mode", ->

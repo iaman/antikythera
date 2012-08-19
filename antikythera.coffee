@@ -17,12 +17,16 @@ class Antikythera
 
   crank: ->
     return false unless @options?.development
-    if @_present or @position is @stageQueue[0]?.position
+    if @_present() or @position is @stageQueue[0]?.position
       return false unless (@stageQueue.length > 0)
       stage = @stageQueue.shift()
-      if @_present then @_log(@stages[stage.name], stage.data)
+      if @_present() then @_log(@stages[stage.name], stage.data)
       return @_transition(@stages[stage.name], stage.data)
     else
+      if @history[@position]?.transitionedIn isnt @currentStage
+        @_transition @history[@position]?.transitionedIn, { in: @history[@position]?.dataIn }
+      @position++
+      @_transition @history[@position]?.transitionedIn, { in: @history[@position]?.dataIn, out: @history[@position]?.dataOut}
 
   go: (name, data) ->
     return @_queue(name, @position, data) if @options?.development
@@ -31,7 +35,7 @@ class Antikythera
     @_transition(@stages[name], data)
 
   rewind: ->
-    return false unless (@history.length > 1) and @options?.development
+    return false unless (@history.length > 1) and @position > 0 and @options?.development
     @position--
     @_transition @history[@position]?.transitionedIn, { in: @history[@position]?.dataIn }
 

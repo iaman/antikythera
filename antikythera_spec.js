@@ -46,7 +46,7 @@ describe("Antikythera", function() {
       this.blah.crank();
       return expect(this.blah._transition).toHaveBeenCalledWith(this.blah.stages["stuff"], void 0);
     });
-    return it("shifts a transition with data out of the queue and fires it off", function() {
+    it("shifts a transition with data out of the queue and fires it off", function() {
       this.blah.go("stuff", {
         "in": "hello",
         out: "goodbye"
@@ -56,6 +56,37 @@ describe("Antikythera", function() {
       return expect(this.blah._transition).toHaveBeenCalledWith(this.blah.stages["stuff"], {
         "in": "hello",
         out: "goodbye"
+      });
+    });
+    return describe("when called in a previous stage", function() {
+      it("returns the stage to the canon historical stage before trying to progress through history", function() {
+        this.blah.stage("things", transitionIn, transitionOut);
+        this.blah.go("stuff");
+        this.blah.crank();
+        this.blah.rewind();
+        this.blah.go("things");
+        this.blah.crank();
+        spyOn(this.blah, "_transition");
+        this.blah.crank();
+        return expect(this.blah._transition.calls[0].args).toEqual([
+          this.blah.history[0].transitionedIn, {
+            "in": void 0
+          }
+        ]);
+      });
+      return it("progresses one stage forward through the history", function() {
+        this.blah.go("stuff");
+        this.blah.crank();
+        this.blah.rewind();
+        spyOn(this.blah, "_transition");
+        this.blah.crank();
+        expect(this.blah.position).toEqual(1);
+        return expect(this.blah._transition.calls[0].args).toEqual([
+          this.blah.stages["stuff"], {
+            "in": void 0,
+            out: void 0
+          }
+        ]);
       });
     });
   });
@@ -120,6 +151,12 @@ describe("Antikythera", function() {
       return this.blah.stage("things", transitionIn, transitionOut);
     });
     it("returns false if there's no history", function() {
+      return expect(this.blah.rewind()).toBeFalsy;
+    });
+    it("returns false if you've already gone back to the first stage", function() {
+      this.blah.go("stuff");
+      this.blah.crank();
+      this.blah.rewind();
       return expect(this.blah.rewind()).toBeFalsy;
     });
     it("returns false if the Antikythera is not in development mode", function() {
