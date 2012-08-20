@@ -26,10 +26,10 @@ describe "Antikythera", ->
       blah = new Antikythera()
       blah.stageQueue.push("stuff")
 
-      expect(blah.crank()).toBeFalsy
+      expect(blah.crank()).toBeFalsy()
 
     it "returns false if there's nothing in the queue", ->
-      expect(@blah.crank()).toBeFalsy
+      expect(@blah.crank()).toBeFalsy()
 
     it "logs the transition if the Antikythera is in the present", ->
       spyOn @blah, "_log"
@@ -91,7 +91,7 @@ describe "Antikythera", ->
       expect(@blah._queue).toHaveBeenCalledWith "stuff", 0, undefined
 
     it "returns false if the requested stage is the current stage", ->
-      expect(@blah.go("default")).toBeFalsy
+      expect(@blah.go("default")).toBeFalsy()
 
     it "logs the transition made", ->
       spyOn @blah, "_log"
@@ -131,20 +131,20 @@ describe "Antikythera", ->
       @blah.stage "things", transitionIn, transitionOut
 
     it "returns false if there's no history", ->
-      expect(@blah.rewind()).toBeFalsy
+      expect(@blah.rewind()).toBeFalsy()
 
     it "returns false if you've already gone back to the first stage", ->
       @blah.go "stuff"
       @blah.crank()
       @blah.rewind()
 
-      expect(@blah.rewind()).toBeFalsy
+      expect(@blah.rewind()).toBeFalsy()
 
     it "returns false if the Antikythera is not in development mode", ->
       @blah.options.development = false
       @blah.go "stuff"
 
-      expect(@blah.rewind()).toBeFalsy
+      expect(@blah.rewind()).toBeFalsy()
 
     it "fires off a transition", ->
       spyOn @blah, "_transition"
@@ -216,6 +216,10 @@ describe "Antikythera", ->
 
     it "increments the position", ->
       expect(@blah.position).toEqual 1
+
+    it "returns false if in the past", ->
+      @blah.position--
+      expect(@blah._log()).toBeFalsy()
 
 
   describe "_present", ->

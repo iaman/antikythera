@@ -20,7 +20,7 @@ class Antikythera
     if @_present() or @position is @stageQueue[0]?.position
       return false unless (@stageQueue.length > 0)
       stage = @stageQueue.shift()
-      if @_present() then @_log(@stages[stage.name], stage.data)
+      @_log(@stages[stage.name], stage.data)
       return @_transition(@stages[stage.name], stage.data)
     else
       if @history[@position]?.transitionedIn isnt @currentStage
@@ -46,6 +46,7 @@ class Antikythera
       transitionOut: transitionOut
 
   _log: (stage, data) ->
+    return false unless @_present()
     @history.push
       dataIn: data?.in
       dataOut: data?.out
