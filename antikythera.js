@@ -125,4 +125,6 @@
 
   })();
 
+  window.Antikythera = Antikythera;
+
 }).call(this);

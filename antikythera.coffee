@@ -72,3 +72,5 @@ class Antikythera
     stage.transitionIn?(data?.in)
     true
 
+window.Antikythera = Antikythera
+
