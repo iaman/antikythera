@@ -295,3 +295,4 @@ describe "Antikythera", ->
       @blah.stage "stuff", transitionIn, transitionOut
 
       expect(@blah.go("stuff")).toBeTruthy
+
